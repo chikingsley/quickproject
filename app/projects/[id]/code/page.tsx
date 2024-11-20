@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Send } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { MonacoEditor } from "@/components/editor/monaco-editor"
+import { CodePreview } from "@/components/preview/code-preview"
 
 // Placeholder for Preview
 const Preview = () => (
@@ -84,19 +85,19 @@ export default function CodePage() {
         {/* Editor and Preview */}
         <ResizablePanel defaultSize={60}>
           <ResizablePanelGroup direction="horizontal">
-            <ResizablePanel defaultSize={50}>
+            <ResizablePanel defaultSize={50} minSize={30}>
               <div className="h-full p-4">
                 <MonacoEditor
                   value={code}
                   onChange={setCode}
-                  language="typescript"
+                  className="h-full"
                 />
               </div>
             </ResizablePanel>
-            <ResizableHandle />
-            <ResizablePanel defaultSize={50}>
+            <ResizableHandle withHandle />
+            <ResizablePanel defaultSize={50} minSize={30}>
               <div className="h-full p-4">
-                <Preview />
+                <CodePreview code={code} className="h-full" />
               </div>
             </ResizablePanel>
           </ResizablePanelGroup>
