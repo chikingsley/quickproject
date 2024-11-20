@@ -7,13 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
 import { Send } from "lucide-react"
 import { cn } from "@/lib/utils"
-
-// Placeholder for Monaco Editor
-const MonacoEditor = () => (
-  <div className="w-full h-full bg-background border rounded-lg p-4">
-    <div className="text-sm text-muted-foreground">Monaco Editor coming soon...</div>
-  </div>
-)
+import { MonacoEditor } from "@/components/editor/monaco-editor"
 
 // Placeholder for Preview
 const Preview = () => (
@@ -25,6 +19,7 @@ const Preview = () => (
 export default function CodePage() {
   const params = useParams()
   const [input, setInput] = useState("")
+  const [code, setCode] = useState("")
   const [messages, setMessages] = useState<Array<{role: "user" | "assistant", content: string}>>([])
 
   const handleSend = () => {
@@ -91,7 +86,11 @@ export default function CodePage() {
           <ResizablePanelGroup direction="horizontal">
             <ResizablePanel defaultSize={50}>
               <div className="h-full p-4">
-                <MonacoEditor />
+                <MonacoEditor
+                  value={code}
+                  onChange={setCode}
+                  language="typescript"
+                />
               </div>
             </ResizablePanel>
             <ResizableHandle />
