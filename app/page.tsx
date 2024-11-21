@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { PlusIcon } from "lucide-react"
+import { VoiceControl } from "@/components/ai/voice/SimpleVoice"
 
 export default function Page() {
   return (
@@ -16,6 +17,9 @@ export default function Page() {
           New Project
         </Button>
       </div>
+
+      {/* Voice Control */}
+      <VoiceControl className="mt-4" />
 
       {/* Dashboard Cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

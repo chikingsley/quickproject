@@ -28,17 +28,17 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
         
         {/* Sidebar */}
         <Sidebar 
-          className="fixed left-0 top-14 z-30 h-[calc(100vh-3.5rem)] border-r bg-background transition-all duration-300 ease-in-out" 
+          className="fixed left-0 top-14 z-30 h-[calc(100vh-3.5rem-4rem)] border-r bg-background transition-all duration-300 ease-in-out" 
           onCollapsedChange={setIsSidebarCollapsed}
         />
         
         {/* Main Content Area */}
         <main className={cn(
           "flex-1 overflow-hidden transition-all duration-300 ease-in-out",
-          "pt-14", // Header height
+          "pt-14 pb-16", // Header height + AI Panel collapsed height
           isSidebarCollapsed ? "md:pl-16" : "md:pl-64" // Sidebar width
         )}>
-          <div className="relative h-[calc(100vh-3.5rem)] w-full overflow-auto">
+          <div className="relative h-[calc(100vh-3.5rem-4rem)] w-full overflow-auto">
             <div className="container h-full p-6">
               {children}
             </div>
