@@ -1,8 +1,7 @@
 "use client"
 
-import { useEffect, useRef } from "react"
-import * as monaco from "monaco-editor"
 import { useTheme } from "next-themes"
+import { Editor } from "@monaco-editor/react"
 import { cn } from "@/lib/utils"
 
 interface MonacoEditorProps {
@@ -20,66 +19,29 @@ export function MonacoEditor({
   className,
   readOnly = false,
 }: MonacoEditorProps) {
-  const editorRef = useRef<HTMLDivElement>(null)
   const { theme } = useTheme()
-  const monacoRef = useRef<monaco.editor.IStandaloneCodeEditor>()
 
-  useEffect(() => {
-    if (editorRef.current) {
-      monacoRef.current = monaco.editor.create(editorRef.current, {
-        value,
-        language,
-        theme: theme === "dark" ? "vs-dark" : "vs",
-        minimap: { enabled: true },
-        fontSize: 14,
-        fontFamily: "var(--font-mono)",
-        lineNumbers: "on",
-        roundedSelection: true,
-        scrollBeyondLastLine: false,
-        readOnly,
-        automaticLayout: true,
-        padding: { top: 16 },
-      })
-
-      // Handle changes
-      monacoRef.current.onDidChangeModelContent(() => {
-        const value = monacoRef.current?.getValue()
-        onChange?.(value || "")
-      })
-
-      // Handle theme changes
-      const updateTheme = () => {
-        monaco.editor.setTheme(theme === "dark" ? "vs-dark" : "vs")
-      }
-
-      return () => {
-        monacoRef.current?.dispose()
-      }
-    }
-  }, [])
-
-  // Update value when prop changes
-  useEffect(() => {
-    if (monacoRef.current) {
-      const currentValue = monacoRef.current.getValue()
-      if (currentValue !== value) {
-        monacoRef.current.setValue(value)
-      }
-    }
-  }, [value])
-
-  // Update theme when it changes
-  useEffect(() => {
-    monaco.editor.setTheme(theme === "dark" ? "vs-dark" : "vs")
-  }, [theme])
+  const handleEditorChange = (value: string | undefined) => {
+    onChange?.(value || "")
+  }
 
   return (
-    <div
-      ref={editorRef}
-      className={cn(
-        "w-full h-full min-h-[300px] rounded-lg border bg-background",
-        className
-      )}
-    />
+    <div className={cn("relative w-full h-full min-h-[300px]", className)}>
+      <Editor
+        value={value}
+        onChange={handleEditorChange}
+        language={language}
+        theme={theme === "dark" ? "vs-dark" : "light"}
+        options={{
+          minimap: { enabled: false },
+          fontSize: 14,
+          lineNumbers: "on",
+          roundedSelection: false,
+          scrollBeyondLastLine: false,
+          readOnly,
+          automaticLayout: true,
+        }}
+      />
+    </div>
   )
 }

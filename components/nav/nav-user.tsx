@@ -12,6 +12,8 @@ import {
 } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,6 +39,11 @@ interface UserData {
   isPro?: boolean
 }
 
+interface NavUserProps {
+  user: UserData
+  isCollapsed?: boolean
+}
+
 // Helper function to get initials from name
 function getInitials(name: string) {
   return name
@@ -46,8 +53,50 @@ function getInitials(name: string) {
     .toUpperCase()
 }
 
-export function NavUser({ user }: { user: UserData }) {
+export function NavUser({ user, isCollapsed }: NavUserProps) {
   const { isMobile } = useSidebar()
+
+  const userButton = (
+    <Button
+      variant="ghost"
+      className="w-full justify-start gap-2 px-2"
+    >
+      <Avatar className="h-6 w-6">
+        <AvatarImage src={user.avatar} alt={user.name} />
+        <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+      </Avatar>
+      {!isCollapsed && (
+        <div className="flex flex-1 items-center justify-between">
+          <div className="flex flex-col items-start">
+            <span className="text-sm font-medium">{user.name}</span>
+            <span className="text-xs text-muted-foreground">{user.email}</span>
+          </div>
+          {user.isPro && (
+            <span className="ml-auto text-xs text-primary">PRO</span>
+          )}
+        </div>
+      )}
+    </Button>
+  )
+
+  if (isCollapsed) {
+    return (
+      <Tooltip delayDuration={0}>
+        <TooltipTrigger asChild>
+          {userButton}
+        </TooltipTrigger>
+        <TooltipContent side="right" className="flex items-center gap-4">
+          <div className="flex flex-col">
+            <span>{user.name}</span>
+            <span className="text-xs text-muted-foreground">{user.email}</span>
+          </div>
+          {user.isPro && (
+            <span className="text-xs text-primary">PRO</span>
+          )}
+        </TooltipContent>
+      </Tooltip>
+    )
+  }
 
   return (
     <SidebarGroup className="mt-auto">
@@ -55,29 +104,7 @@ export function NavUser({ user }: { user: UserData }) {
         <SidebarMenu>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <SidebarMenuButton
-                aria-label="User menu"
-                className="h-[48px] w-full gap-3 px-3"
-              >
-                <Avatar>
-                  <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
-                </Avatar>
-                {!isMobile && (
-                  <div className="flex flex-col items-start text-left">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium">{user.name}</span>
-                      {user.isPro && (
-                        <BadgeCheck className="h-4 w-4 text-primary" />
-                      )}
-                    </div>
-                    <span className="text-xs text-muted-foreground">
-                      {user.email}
-                    </span>
-                  </div>
-                )}
-                <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
-              </SidebarMenuButton>
+              {userButton}
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="start"

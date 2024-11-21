@@ -1,89 +1,72 @@
 "use client"
 
 import Link from "next/link"
-import { ChevronRight, type LucideIcon } from "lucide-react"
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible"
-import {
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuAction,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
-} from "@/components/ui/sidebar"
+import { LucideIcon } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { buttonVariants } from "@/components/ui/button"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
 export interface NavMainItem {
   title: string
   url: string
   icon: LucideIcon
+  badge?: React.ReactNode
   isActive?: boolean
-  isCollapsed?: boolean
-  items?: {
-    title: string
-    url: string
-  }[]
 }
 
-export function NavMain({ items }: { items: NavMainItem[] }) {
+interface NavMainProps {
+  items: NavMainItem[]
+  isCollapsed?: boolean
+}
+
+export function NavMain({ items, isCollapsed }: NavMainProps) {
   return (
-    <SidebarGroup>
-      <SidebarGroupLabel>Overview</SidebarGroupLabel>
-      <SidebarMenu>
-        {items.map((item) => (
-          <Collapsible 
-            key={item.title} 
-            asChild 
-            defaultOpen={!item.isCollapsed}
-          >
-            <SidebarMenuItem>
-              <Link href={item.url} passHref legacyBehavior>
-                <SidebarMenuButton 
-                  asChild 
-                  tooltip={item.title}
-                  className={item.isActive ? "bg-accent" : ""}
-                >
-                  <a>
-                    <item.icon className="h-4 w-4" />
-                    <span>{item.title}</span>
-                  </a>
-                </SidebarMenuButton>
-              </Link>
-              {item.items?.length ? (
+    <div
+      data-collapsed={isCollapsed}
+      className="group flex flex-col gap-4 py-2 data-[collapsed=true]:py-2"
+    >
+      <nav className="grid gap-1 px-2">
+        {items.map((item, index) => {
+          const Icon = item.icon
+          const link = (
+            <Link
+              key={index}
+              href={item.url}
+              className={cn(
+                buttonVariants({ variant: item.isActive ? "default" : "ghost", size: "sm" }),
+                "h-9 w-full justify-start",
+                isCollapsed && "h-9 w-9 justify-center p-0"
+              )}
+            >
+              <Icon className={cn("h-4 w-4", !isCollapsed && "mr-2")} />
+              {!isCollapsed && (
                 <>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuAction className="data-[state=open]:rotate-90 transition-transform">
-                      <ChevronRight className="h-4 w-4" />
-                      <span className="sr-only">Toggle</span>
-                    </SidebarMenuAction>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      {item.items?.map((subItem) => (
-                        <SidebarMenuSubItem key={subItem.title}>
-                          <Link href={subItem.url} passHref legacyBehavior>
-                            <SidebarMenuSubButton asChild>
-                              <a>
-                                <span>{subItem.title}</span>
-                              </a>
-                            </SidebarMenuSubButton>
-                          </Link>
-                        </SidebarMenuSubItem>
-                      ))}
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
+                  <span>{item.title}</span>
+                  {item.badge && (
+                    <span className="ml-auto">{item.badge}</span>
+                  )}
                 </>
-              ) : null}
-            </SidebarMenuItem>
-          </Collapsible>
-        ))}
-      </SidebarMenu>
-    </SidebarGroup>
+              )}
+            </Link>
+          )
+
+          if (isCollapsed) {
+            return (
+              <Tooltip key={index} delayDuration={0}>
+                <TooltipTrigger asChild>
+                  {link}
+                </TooltipTrigger>
+                <TooltipContent side="right" className="flex items-center gap-4">
+                  {item.title}
+                  {item.badge}
+                </TooltipContent>
+              </Tooltip>
+            )
+          }
+
+          return link
+        })}
+      </nav>
+    </div>
   )
 }

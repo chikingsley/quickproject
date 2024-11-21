@@ -1,108 +1,238 @@
 "use client"
 
 import { useParams } from "next/navigation"
-import { useState } from "react"
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
+import { useState, useEffect, useRef } from "react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
-import { Send } from "lucide-react"
+import { Play, Sparkles, Code2, Eye, Terminal as TerminalIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { MonacoEditor } from "@/components/editor/monaco-editor"
-import { CodePreview } from "@/components/preview/code-preview"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { FileExplorer } from "@/components/file-explorer"
+import path from "path"
 
-// Placeholder for Preview
-const Preview = () => (
-  <div className="w-full h-full bg-background border rounded-lg p-4">
-    <div className="text-sm text-muted-foreground">Preview coming soon...</div>
-  </div>
-)
+// Function to detect language from file extension
+function detectLanguage(filePath: string): string {
+  const ext = path.extname(filePath).toLowerCase()
+  const languageMap: Record<string, string> = {
+    ".js": "javascript",
+    ".jsx": "javascript",
+    ".ts": "typescript",
+    ".tsx": "typescript",
+    ".py": "python",
+    ".java": "java",
+    ".cpp": "cpp",
+    ".cs": "csharp",
+    ".go": "go",
+    ".rs": "rust",
+    ".rb": "ruby",
+    ".php": "php",
+    ".html": "html",
+    ".css": "css",
+    ".json": "json",
+    ".md": "markdown",
+  }
+  return languageMap[ext] || "plaintext"
+}
 
 export default function CodePage() {
   const params = useParams()
-  const [input, setInput] = useState("")
   const [code, setCode] = useState("")
-  const [messages, setMessages] = useState<Array<{role: "user" | "assistant", content: string}>>([])
+  const [terminalInput, setTerminalInput] = useState("")
+  const [terminalHistory, setTerminalHistory] = useState<string[]>([])
+  const [selectedFile, setSelectedFile] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<"code" | "preview">("code")
+  const [isEditorReady, setIsEditorReady] = useState(false)
+  const terminalInputRef = useRef<HTMLInputElement>(null)
+  const [files] = useState([
+    {
+      name: "src",
+      path: "/src",
+      type: "directory" as const,
+      modifiedTime: Date.now(),
+      children: [
+        {
+          name: "main.ts",
+          path: "/src/main.ts",
+          type: "file" as const,
+          modifiedTime: Date.now(),
+        },
+        {
+          name: "utils",
+          path: "/src/utils",
+          type: "directory" as const,
+          modifiedTime: Date.now(),
+          children: [
+            {
+              name: "helpers.ts",
+              path: "/src/utils/helpers.ts",
+              type: "file" as const,
+              modifiedTime: Date.now(),
+            }
+          ]
+        },
+        {
+          name: "components",
+          path: "/src/components",
+          type: "directory" as const,
+          modifiedTime: Date.now(),
+          children: [
+            {
+              name: "Button.tsx",
+              path: "/src/components/Button.tsx",
+              type: "file" as const,
+              modifiedTime: Date.now(),
+            }
+          ]
+        }
+      ]
+    },
+    {
+      name: "package.json",
+      path: "/package.json",
+      type: "file" as const,
+      modifiedTime: Date.now(),
+    },
+    {
+      name: "README.md",
+      path: "/README.md",
+      type: "file" as const,
+      modifiedTime: Date.now(),
+    }
+  ])
 
-  const handleSend = () => {
-    if (!input.trim()) return
-    
-    setMessages(prev => [...prev, { role: "user", content: input }])
-    // TODO: Implement AI response
-    setInput("")
+  useEffect(() => {
+    setIsEditorReady(true)
+  }, [])
+
+  const handleFileSelect = (file: string) => {
+    setSelectedFile(file)
+  }
+
+  const handleTerminalKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      const command = terminalInput.trim()
+      if (command) {
+        setTerminalHistory(prev => [...prev, `$ ${command}`, `Executed: ${command}`])
+        setTerminalInput("")
+      }
+    }
+  }
+
+  const executeCode = () => {
+    setTerminalHistory(prev => [...prev, "Executing code...", "Done!"])
   }
 
   return (
-    <div className="h-[calc(100vh-4rem)]">
-      <ResizablePanelGroup
-        direction="vertical"
-        className="min-h-[200px] rounded-lg border"
-      >
-        {/* Chat Interface */}
-        <ResizablePanel defaultSize={40}>
-          <div className="flex flex-col h-full">
-            <ScrollArea className="flex-1 p-4">
-              {messages.map((message, i) => (
-                <div
-                  key={i}
-                  className={cn(
-                    "mb-4 flex",
-                    message.role === "assistant" ? "justify-start" : "justify-end"
-                  )}
-                >
-                  <div
-                    className={cn(
-                      "rounded-lg px-3 py-2 max-w-[80%]",
-                      message.role === "assistant" 
-                        ? "bg-muted text-muted-foreground"
-                        : "bg-primary text-primary-foreground"
-                    )}
-                  >
-                    {message.content}
-                  </div>
-                </div>
-              ))}
-            </ScrollArea>
-            
-            <div className="border-t p-4">
-              <div className="flex gap-2">
-                <input
-                  className="flex-1 px-3 py-2 text-sm rounded-md border bg-background"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Type a message or command..."
-                  onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                />
-                <Button size="icon" onClick={handleSend}>
-                  <Send className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </ResizablePanel>
+    <div className="flex h-full flex-col">
+      {/* Header with Tabs */}
+      <div className="flex items-center justify-between border-b px-2">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
+          <TabsList className="h-10">
+            <TabsTrigger value="code" className="gap-2">
+              <Code2 className="h-4 w-4" />
+              Code
+            </TabsTrigger>
+            <TabsTrigger value="preview" className="gap-2">
+              <Eye className="h-4 w-4" />
+              Preview
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
 
-        <ResizableHandle />
+      {/* Content Area */}
+      <div className="flex-1 flex">
+        {/* File Explorer */}
+        <FileExplorer
+          files={files}
+          onFileSelect={handleFileSelect}
+          selectedFile={selectedFile}
+        />
 
-        {/* Editor and Preview */}
-        <ResizablePanel defaultSize={60}>
-          <ResizablePanelGroup direction="horizontal">
-            <ResizablePanel defaultSize={50} minSize={30}>
-              <div className="h-full p-4">
+        {/* Editor/Preview */}
+        <div className="flex-1 flex flex-col">
+          <div className="flex-1 relative">
+            <div className={cn(
+              "absolute inset-0",
+              activeTab === "preview" && "hidden"
+            )}>
+              {isEditorReady && (
                 <MonacoEditor
                   value={code}
                   onChange={setCode}
-                  className="h-full"
+                  language={selectedFile ? detectLanguage(selectedFile) : "plaintext"}
+                  options={{
+                    minimap: { enabled: false },
+                    fontSize: 14,
+                    lineNumbers: "on",
+                    roundedSelection: false,
+                    scrollBeyondLastLine: false,
+                    readOnly: false,
+                    automaticLayout: true,
+                  }}
                 />
+              )}
+            </div>
+            <div className={cn(
+              "absolute inset-0",
+              activeTab === "code" && "hidden"
+            )}>
+              <div className="h-full w-full flex items-center justify-center bg-background">
+                <div className="text-muted-foreground">
+                  Preview will appear here
+                </div>
               </div>
-            </ResizablePanel>
-            <ResizableHandle withHandle />
-            <ResizablePanel defaultSize={50} minSize={30}>
-              <div className="h-full p-4">
-                <CodePreview code={code} className="h-full" />
+            </div>
+          </div>
+
+          {/* Terminal */}
+          <div className="h-64 border-t">
+            <div className="flex items-center justify-between px-4 py-2 border-b">
+              <div className="flex items-center gap-2">
+                <TerminalIcon className="h-4 w-4" />
+                <h2 className="text-sm font-semibold">Terminal</h2>
               </div>
-            </ResizablePanel>
-          </ResizablePanelGroup>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+            </div>
+            <ScrollArea className="h-[calc(100%-41px)]">
+              <div className="p-4 font-mono text-sm">
+                {terminalHistory.map((line, i) => (
+                  <div key={i} className="whitespace-pre-wrap">
+                    {line}
+                  </div>
+                ))}
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground">$</span>
+                  <input
+                    ref={terminalInputRef}
+                    className="flex-1 bg-transparent outline-none"
+                    value={terminalInput}
+                    onChange={(e) => setTerminalInput(e.target.value)}
+                    onKeyDown={handleTerminalKeyDown}
+                    placeholder="Type a command..."
+                  />
+                </div>
+              </div>
+            </ScrollArea>
+          </div>
+        </div>
+      </div>
+
+      {/* Floating Action Bar */}
+      <div className="absolute bottom-4 right-4 flex items-center gap-2 p-1 rounded-lg bg-background/80 backdrop-blur border shadow-lg">
+        <Button 
+          size="sm" 
+          variant="ghost" 
+          onClick={executeCode}
+        >
+          <Play className="h-4 w-4 mr-2" />
+          Run
+        </Button>
+        <Button size="sm" variant="ghost">
+          <Sparkles className="h-4 w-4 mr-2" />
+          Format
+        </Button>
+      </div>
     </div>
   )
 }
